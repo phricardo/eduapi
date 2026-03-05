@@ -4,6 +4,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -38,6 +39,30 @@ public class SecurityConfig {
                     .permitAll()
                     .anyRequest()
                     .authenticated())
+        .exceptionHandling(
+            exceptions ->
+                exceptions
+                    .authenticationEntryPoint(
+                        (request, response, authException) -> {
+                          response.setStatus(401);
+                          response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                          response
+                              .getWriter()
+                              .write(
+                                  "{\"status\":401,\"error\":\"Unauthorized\","
+                                      + "\"message\":\"Usuario nao autenticado. "
+                                      + "Faca login em /oauth2/authorization/google\"}");
+                        })
+                    .accessDeniedHandler(
+                        (request, response, accessDeniedException) -> {
+                          response.setStatus(403);
+                          response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                          response
+                              .getWriter()
+                              .write(
+                                  "{\"status\":403,\"error\":\"Forbidden\","
+                                      + "\"message\":\"Usuario autenticado sem permissao para este recurso\"}");
+                        }))
         .oauth2Login(
             oauth2 ->
                 oauth2
