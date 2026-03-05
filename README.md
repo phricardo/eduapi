@@ -1,3 +1,5 @@
+![EduAPI Logo](.github/eduapi.png)
+
 # EduAPI
 
 API REST para plataforma de cursos online (backend only), com autenticação OAuth2 Google.
