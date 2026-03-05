@@ -11,17 +11,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.transaction.annotation.Transactional;
 
 @Configuration
-@Profile("local")
+@Profile("local | default")
 @RequiredArgsConstructor
+@Slf4j
 public class LocalCourseLessonSeedConfig {
 
-  private static final int TARGET_COURSES = 12;
+  private static final int TARGET_COURSES = 3;
   private static final int LESSONS_PER_COURSE = 4;
   private static final String INSTRUTOR_EMAIL = "seed.instrutor@local.test";
 
@@ -31,10 +34,20 @@ public class LocalCourseLessonSeedConfig {
   @Bean
   public ApplicationRunner seedLocalCoursesAndLessons() {
     return args -> {
+      log.info("[SEED] Iniciando seed de cursos e aulas...");
       final AppUser instrutor = getOrCreateInstrutor();
       final List<Course> existingCourses = courseRepository.findByInstrutorId(instrutor.getId());
+      log.info(
+          "[SEED] Instrutor seed: id={}, email={}, cursosExistentes={}",
+          instrutor.getId(),
+          instrutor.getEmail(),
+          existingCourses.size());
 
       if (existingCourses.size() >= TARGET_COURSES) {
+        log.info(
+            "[SEED] Nenhuma ação necessária. Já existem {} cursos (alvo={}).",
+            existingCourses.size(),
+            TARGET_COURSES);
         return;
       }
 
@@ -72,20 +85,43 @@ public class LocalCourseLessonSeedConfig {
 
       if (!toSave.isEmpty()) {
         courseRepository.saveAll(toSave);
+        log.info(
+            "[SEED] Seed concluído com sucesso. Cursos criados: {}. Aulas criadas: {}.",
+            toSave.size(),
+            toSave.size() * LESSONS_PER_COURSE);
+      } else {
+        log.info("[SEED] Nenhum novo curso para criar.");
       }
     };
   }
 
+  @Transactional
   private AppUser getOrCreateInstrutor() {
     return appUserRepository
         .findByEmail(INSTRUTOR_EMAIL)
+        .map(
+            instrutorExistente -> {
+              if (instrutorExistente.getTipo() != TipoUsuario.INSTRUTOR) {
+                instrutorExistente.setTipo(TipoUsuario.INSTRUTOR);
+                log.info(
+                    "[SEED] Usuário seed existente alterado para INSTRUTOR: {}",
+                    instrutorExistente.getEmail());
+                return appUserRepository.save(instrutorExistente);
+              }
+              return instrutorExistente;
+            })
         .orElseGet(
             () -> {
               final AppUser instrutor = new AppUser();
               instrutor.setNome("Instrutor Seed Local");
               instrutor.setEmail(INSTRUTOR_EMAIL);
               instrutor.setTipo(TipoUsuario.INSTRUTOR);
-              return appUserRepository.save(instrutor);
+              final AppUser saved = appUserRepository.save(instrutor);
+              log.info(
+                  "[SEED] Instrutor seed criado com sucesso: id={}, email={}",
+                  saved.getId(),
+                  saved.getEmail());
+              return saved;
             });
   }
 }
