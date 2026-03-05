@@ -1,0 +1,15 @@
+﻿services:
+  postgres:
+    image: postgres:16
+    container_name: eduapi-postgres
+    environment:
+      POSTGRES_DB: eduapi
+      POSTGRES_USER: eduapi
+      POSTGRES_PASSWORD: eduapi
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
