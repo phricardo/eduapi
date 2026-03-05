@@ -47,3 +47,6 @@ Documentação e teste de endpoints:
 - `POST /matriculas/{cursoId}`: matrícula em curso (somente `ALUNO`)
 
 Se não estiver autenticado, a API retorna `401` com mensagem de login.
+
+## Testes - Evidência
+<img width="1472" height="860" alt="image" src="https://github.com/user-attachments/assets/3d4bfa24-fdf5-4288-b71a-0c3697b81478" />
